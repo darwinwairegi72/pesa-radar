@@ -2,10 +2,10 @@ name: Collect new data
 
 on:
   schedule:
-    - cron: "30 12 * * 4"   # Thursdays 15:30 Nairobi time (after the T-bill auction)
-    - cron: "30 14 * * 4"   # Thursdays 17:30 Nairobi time (second try)
-    - cron: "0 5 * * *"     # Every day 08:00 Nairobi time (bond and IPO notices)
-  workflow_dispatch:         # lets you run it by hand from the Actions tab
+    - cron: "30 12 * * 4"
+    - cron: "30 14 * * 4"
+    - cron: "0 5 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write

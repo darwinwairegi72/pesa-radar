@@ -1,7 +1,7 @@
 # Pesa Radar pipeline settings. Edit this file in the GitHub web editor if needed.
 
 # Websites ask who is visiting. Put a real contact email so they can reach you.
-user_agent: "PesaRadarBot/0.1 (contact: [YOUR EMAIL])"
+user_agent: "PesaRadarBot/0.1 (contact: [wairegierick@outlook.com)"
 
 # Pause between requests, in seconds, so we are gentle on the sources.
 request_delay_seconds: 3

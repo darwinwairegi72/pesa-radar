@@ -15,3 +15,9 @@ def get(url: str, cfg: dict, binary: bool = False):
     _last_request = time.time()
     response.raise_for_status()
     return response.content if binary else response.text
+
+
+def safe_url(url: str) -> str:
+    """Spaces in a link break it when it is pasted into an email or an issue. Encode them (as %20)."""
+    import urllib.parse
+    return urllib.parse.quote(url, safe=":/?&=#%@+,;~")

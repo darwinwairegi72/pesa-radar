@@ -70,16 +70,17 @@ def parse_tbill_text(text: str) -> dict:
     problems = []
     parsed = {"tenors": {}, "problems": problems}
 
-    m = re.search(r"DATED\s+(\d{2}/\d{2}/\d{4})", text)
-    parsed["value_date"] = _iso(m.group(1)) if m else None
-    if not m:
-        problems.append("Could not find the issue date ('DATED dd/mm/yyyy').")
+    # The "NEXT TREASURY BILLS AUCTIONS ... DATED <date>" line belongs to the FOLLOWING auction.
+    # Take it out before looking for this auction's own date, or the two get mixed up.
+    nxt = re.search(r"NEXT\s+TREASURY\s+BILLS?\s+AUCTIONS?[\s\S]{0,150}?DATED\s+(\d{2}/\d{2}/\d{4})", text, re.I)
+    parsed["next_value_date"] = _iso(nxt.group(1)) if nxt else None
+    own_text = text.replace(nxt.group(0), " ") if nxt else text
+
+    m = re.search(r"DATED\s*\.?\s*(\d{2}/\d{2}/\d{4})", own_text)
+    parsed["value_date"] = _iso(m.group(1)) if m else None   # build_item falls back to the file name
 
     m = re.search(r"Results\s+Announcement\s+(\d{2}/\d{2}/\d{4})", text, re.I)
     parsed["auction_date"] = _iso(m.group(1)) if m else None
-
-    m = re.search(r"NEXT\s+TREASURY\s+BILLS?\s+AUCTIONS?[\s\S]{0,150}?DATED\s+(\d{2}/\d{2}/\d{4})", text, re.I)
-    parsed["next_value_date"] = _iso(m.group(1)) if m else None
 
     offered = _three_amounts(text, r"Amount\s+Offered")
     bids = _three_amounts(text, r"Bids\s+Received")
@@ -120,6 +121,8 @@ def build_item(parsed: dict, source_url: str, cfg: dict, expected_date: str = No
     wht = cfg.get("tax", {}).get("withholding_rate", 0.15)
     problems = list(parsed["problems"])
     value_date = parsed.get("value_date") or expected_date
+    if not value_date:
+        problems.append("Could not find the issue date in the PDF or the file name.")
     if expected_date and parsed.get("value_date") and parsed["value_date"] != expected_date:
         problems.append(f"The date in the PDF ({parsed['value_date']}) differs from the file name ({expected_date}).")
     tenors = {}
@@ -128,7 +131,12 @@ def build_item(parsed: dict, source_url: str, cfg: dict, expected_date: str = No
         entry["net_rate_pct"] = round(entry["rate_pct"] * (1 - wht), 2) if entry["rate_pct"] is not None else None
         tenors[tenor] = entry
     headline_date = parsed.get("auction_date") or value_date
-    title = f"Treasury bill auction results, {human_date(headline_date)}" if headline_date else "Treasury bill auction results"
+    if parsed.get("auction_date"):
+        title = f"Treasury bill auction results, {human_date(parsed['auction_date'])}"
+    elif value_date:
+        title = f"Treasury bill results, issue date {human_date(value_date)}"
+    else:
+        title = "Treasury bill auction results"
     return {
         "id": f"tbill-{value_date}",
         "kind": "tbill_auction",
@@ -159,7 +167,7 @@ def find_pdf_links(html: str, base_url: str):
         if ".pdf" in plain.lower() and "treasury_bill_results" in plain.lower():
             m = re.search(r"DATED\s*(\d{2})-(\d{2})-(\d{4})", plain, re.I)
             if m:
-                found[href] = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+                found[http.safe_url(href)] = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
     return sorted(found.items(), key=lambda kv: kv[1], reverse=True)
 
 

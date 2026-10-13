@@ -1,0 +1,6 @@
+requests>=2.31
+beautifulsoup4>=4.12
+pypdf>=4.0
+jinja2>=3.1
+pyyaml>=6.0
+pytest>=8.0

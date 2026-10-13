@@ -1,0 +1,38 @@
+# Pesa Radar pipeline settings. Edit this file in the GitHub web editor if needed.
+
+# Websites ask who is visiting. Put a real contact email so they can reach you.
+user_agent: "PesaRadarBot/0.1 (contact: [YOUR EMAIL])"
+
+# Pause between requests, in seconds, so we are gentle on the sources.
+request_delay_seconds: 3
+
+tax:
+  # Withholding tax used to show "after tax" rates. Confirm with KRA or an accountant.
+  withholding_rate: 0.15
+
+# Shown at the bottom of every page. Have a lawyer review this before launch.
+disclaimer: >-
+  Information only. Nothing here is investment advice or a recommendation to buy or sell.
+  Rates and offers change; check each offer document and speak to a licensed adviser before investing.
+  [Add your regulatory disclaimer after legal review.]
+
+site:
+  name: "Pesa Radar"
+
+# Treasury bill auction results (CBK publishes a results PDF after each Thursday auction).
+tbills:
+  listing_url: "https://www.centralbank.go.ke/bills-bonds/treasury-bills/"
+  look_at_latest: 3        # how many of the newest result PDFs to look at each run
+  max_new_per_run: 2       # never create more than this many new drafts per run
+
+# Pages where we look for headlines (new bond sales, IPO approvals, and so on).
+# These become short "notice" drafts: headline and link only. No facts are extracted from them.
+headline_sources:
+  - name: "CBK Treasury bonds"
+    url: "https://www.centralbank.go.ke/bills-bonds/treasury-bonds/"   # VERIFY this address on the first run
+    keywords: ["bond", "tap sale", "auction", "prospectus"]
+    max_new_per_run: 10
+  - name: "CMA Kenya"
+    url: "https://cma.or.ke/"                                           # VERIFY this address on the first run
+    keywords: ["IPO", "prospectus", "approval", "approves", "listing", "public offer"]
+    max_new_per_run: 10

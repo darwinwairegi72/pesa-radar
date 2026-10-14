@@ -24,9 +24,22 @@ def human_date(iso: str) -> str:
     return f"{d.day} {d:%B %Y}"
 
 
-def _iso(dmy: str, sep: str = "/") -> str:
-    day, month, year = dmy.split(sep)
+def _iso(dmy: str) -> str:
+    """'12-10-2026' or '12/10/2026' -> '2026-10-12'."""
+    day, month, year = re.split(r"[-/]", dmy)
     return f"{year}-{month}-{day}"
+
+
+def _signature_date(text: str):
+    """The Director's sign-off date ('October 08, 2026') is the date the results were announced."""
+    m = re.search(r"Director,?\s+Financial\s+Markets\s+([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})", text)
+    if not m:
+        return None
+    try:
+        d = datetime.datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%B %d %Y")
+    except ValueError:
+        return None
+    return d.date().isoformat()
 
 
 def _normalise(text: str) -> str:
@@ -52,7 +65,7 @@ def _rates(text: str):
     """Returns (rates from the 'Weighted Average Interest Rate' line, rates from the table)."""
     label_rates = None
     m = re.search(
-        r"Weighted\s+Average\s+Interest\s+Rate[\s\S]{0,200}?(" + RATE + r")\s*%[\s\S]{0,20}?("
+        r"Weighted\s+Average\s+Interest\s+Rate\s+of\s+accepted\s+bids[\s\S]{0,40}?(" + RATE + r")\s*%[\s\S]{0,20}?("
         + RATE + r")\s*%[\s\S]{0,20}?(" + RATE + r")\s*%", text, re.I)
     if m:
         label_rates = [float(x) for x in m.groups()]
@@ -72,15 +85,17 @@ def parse_tbill_text(text: str) -> dict:
 
     # The "NEXT TREASURY BILLS AUCTIONS ... DATED <date>" line belongs to the FOLLOWING auction.
     # Take it out before looking for this auction's own date, or the two get mixed up.
-    nxt = re.search(r"NEXT\s+TREASURY\s+BILLS?\s+AUCTIONS?[\s\S]{0,150}?DATED\s+(\d{2}/\d{2}/\d{4})", text, re.I)
+    nxt = re.search(r"NEXT\s+TREASURY\s+BILLS?\s+AUCTIONS?[\s\S]{0,150}?DATED\s+(\d{2}[-/]\d{2}[-/]\d{4})", text, re.I)
     parsed["next_value_date"] = _iso(nxt.group(1)) if nxt else None
     own_text = text.replace(nxt.group(0), " ") if nxt else text
 
-    m = re.search(r"DATED\s*\.?\s*(\d{2}/\d{2}/\d{4})", own_text)
+    m = re.search(r"DATED\s*\.?\s*(\d{2}[-/]\d{2}[-/]\d{4})", own_text)
     parsed["value_date"] = _iso(m.group(1)) if m else None   # build_item falls back to the file name
 
-    m = re.search(r"Results\s+Announcement\s+(\d{2}/\d{2}/\d{4})", text, re.I)
-    parsed["auction_date"] = _iso(m.group(1)) if m else None
+    # NOTE: the "Results Announcement" row in these PDFs describes the NEXT auction, so it is not used here.
+    parsed["auction_date"] = _signature_date(text)
+    m = re.search(r"Auction\s+Dates\s*&\s*Bids\s+Closure\s+(\d{2}[-/]\d{2}[-/]\d{4})", text, re.I)
+    parsed["next_auction_date"] = _iso(m.group(1)) if m else None
 
     offered = _three_amounts(text, r"Amount\s+Offered")
     bids = _three_amounts(text, r"Bids\s+Received")
@@ -96,7 +111,7 @@ def parse_tbill_text(text: str) -> dict:
     rates = label_rates or table_rates
     if label_rates and table_rates:
         for tenor, a, b in zip(TENORS, label_rates, table_rates):
-            if abs(a - b) > 0.01:
+            if abs(a - b) > 0.0001:
                 problems.append(f"{tenor}-day rate differs between two places in the PDF ({a} vs {b}).")
 
     for i, tenor in enumerate(TENORS):
@@ -149,6 +164,7 @@ def build_item(parsed: dict, source_url: str, cfg: dict, expected_date: str = No
         "data": {
             "value_date": value_date,
             "auction_date": parsed.get("auction_date"),
+            "next_auction_date": parsed.get("next_auction_date"),
             "next_value_date": parsed.get("next_value_date"),
             "withholding_rate": wht,
             "tenors": tenors,

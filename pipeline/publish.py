@@ -50,7 +50,7 @@ TEMPLATES = {
 <td class="num">{% if t.bids_m is not none and t.offered_m is not none %}{{ t.bids_m|bn }} vs {{ t.offered_m|bn }}{% else %}n/a{% endif %}</td>
 <td class="num">{% if t.accepted_m is not none %}{{ t.accepted_m|bn }}{% else %}n/a{% endif %}</td></tr>{% endfor %}
 </tbody></table></div>
-{% if d.next_value_date %}<p class="muted">Next issue date: {{ d.next_value_date|hd }}.</p>{% endif %}""",
+{% if d.next_auction_date %}<p class="muted">Next auction: {{ d.next_auction_date|hd }}{% if d.next_value_date %}, settling {{ d.next_value_date|hd }}{% endif %}.</p>{% elif d.next_value_date %}<p class="muted">Next issue date: {{ d.next_value_date|hd }}.</p>{% endif %}""",
 
     "index.html": """{% extends "base.html" %}{% block content %}
 <h1>This week's snapshot</h1>

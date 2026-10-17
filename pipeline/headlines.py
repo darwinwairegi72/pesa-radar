@@ -21,6 +21,8 @@ DEFAULT_EXCLUDE_WORDS = ["checklist", "guidelines", "rules", "licence", "license
                          "coffee", "intermediary"]
 DEFAULT_EXCLUDE_URL_PARTS = ["/forms/", "#"]
 DEFAULT_MAX_AGE_DAYS = 45
+# Archive folders hold years of old documents. Items from there must carry a recent date to count.
+ARCHIVE_URL_PARTS = ["/images/docs/", "historical_"]
 
 
 def date_in_text(text: str):
@@ -61,6 +63,12 @@ def find_headlines(html: str, base_url: str, keywords: list, exclude_words=None,
             continue
         dated = date_in_text(title) or date_in_text(url)
         if dated and max_age_days is not None and (today - dated).days > max_age_days:
+            continue
+        # A year such as "June 2011" in the title or link means it is old, even without a full date.
+        years = [int(y) for y in re.findall(r"(?<!\d)(20\d{2})(?!\d)", urllib.parse.unquote(title + " " + url))]
+        if years and max(years) < today.year - 1:
+            continue
+        if not dated and any(part in url for part in ARCHIVE_URL_PARTS):
             continue
         seen.add(url)
         found.append((title, url, dated))

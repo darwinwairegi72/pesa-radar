@@ -1,0 +1,44 @@
+{
+  "id": "tbill-2026-10-26",
+  "kind": "tbill_auction",
+  "status": "pending",
+  "title": "Treasury bill auction results, 22 October 2026",
+  "published_on": "2026-10-22",
+  "source_name": "Central Bank of Kenya",
+  "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/991623375_RESULTS%202705-091%202679-182%202634-364%20DATED%2026-10-2026.xlsx.pdf",
+  "problems": [],
+  "data": {
+    "value_date": "2026-10-26",
+    "auction_date": "2026-10-22",
+    "next_auction_date": "2026-10-29",
+    "next_value_date": "2026-11-02",
+    "withholding_rate": 0.15,
+    "tenors": {
+      "91": {
+        "offered_m": 8000.0,
+        "bids_m": 14336.63,
+        "accepted_m": 14334.18,
+        "rate_pct": 8.7478,
+        "previous_rate_pct": 8.75,
+        "net_rate_pct": 7.44
+      },
+      "182": {
+        "offered_m": 10000.0,
+        "bids_m": 7693.14,
+        "accepted_m": 7685.02,
+        "rate_pct": 8.8591,
+        "previous_rate_pct": 8.86,
+        "net_rate_pct": 7.53
+      },
+      "364": {
+        "offered_m": 10000.0,
+        "bids_m": 6801.35,
+        "accepted_m": 6773.91,
+        "rate_pct": 9.0267,
+        "previous_rate_pct": 9.0383,
+        "net_rate_pct": 7.67
+      }
+    }
+  },
+  "collected_at": "2026-10-22T15:03:57+00:00"
+}
